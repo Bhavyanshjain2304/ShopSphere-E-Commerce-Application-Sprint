@@ -34,4 +34,4 @@ Auth service runs on `http://localhost:8082`
 
 ---
 
-*This is a placement project demonstrating microservices architecture.*
+*This project demonstrates microservices architecture.*
