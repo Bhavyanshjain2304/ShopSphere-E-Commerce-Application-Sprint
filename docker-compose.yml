@@ -1,0 +1,180 @@
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: shopsphere-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - shopsphere-network
+
+  zipkin:
+    image: openzipkin/zipkin
+    container_name: zipkin
+    ports:
+      - "9411:9411"
+    networks:
+      - shopsphere-network
+
+  mysql:
+    image: mysql:8.0
+    container_name: shopsphere-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: 12aAA12@
+      MYSQL_DATABASE: shopsphere_auth
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - shopsphere-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  eureka-server:
+    image: shopsphere/eureka-server:latest
+    build: ./eureka-server
+    container_name: eureka-server
+    ports:
+      - "8761:8761"
+    networks:
+      - shopsphere-network
+
+  config-server:
+    image: shopsphere/config-server:latest
+    build: ./config-server
+    container_name: config-server
+    ports:
+      - "8888:8888"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    depends_on:
+      - eureka-server
+      - zipkin
+    networks:
+      - shopsphere-network
+
+  auth-service:
+    image: shopsphere/auth-service:latest
+    build: ./auth-service
+    container_name: auth-service
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/shopsphere_auth?createDatabaseIfNotExist=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 12aAA12@
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      JWT_SECRET: ShopSphereSecretKey2024ShopSphereSecretKey2024ShopSphereSecretKey2024
+      SPRING_RABBITMQ_HOST: rabbitmq
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+      config-server:
+        condition: service_started
+    networks:
+      - shopsphere-network
+
+  catalog-service:
+    image: shopsphere/catalog-service:latest
+    build: ./catalog-service
+    container_name: catalog-service
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/shopsphere_catalog?createDatabaseIfNotExist=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 12aAA12@
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      SPRING_RABBITMQ_HOST: rabbitmq
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    networks:
+      - shopsphere-network
+
+  order-service:
+    image: shopsphere/order-service:latest
+    build: ./order-service
+    container_name: order-service
+    ports:
+      - "8084:8084"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/shopsphere_orders?createDatabaseIfNotExist=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: 12aAA12@
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      SPRING_RABBITMQ_HOST: rabbitmq
+    depends_on:
+      mysql:
+        condition: service_healthy
+      eureka-server:
+        condition: service_started
+    networks:
+      - shopsphere-network
+
+  admin-service:
+    image: shopsphere/admin-service:latest
+    build: ./admin-service
+    container_name: admin-service
+    ports:
+      - "8085:8085"
+    environment:
+      SERVICES_CATALOG_URL: http://catalog-service:8083
+      SERVICES_ORDER_URL: http://order-service:8084
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    depends_on:
+      - eureka-server
+      - catalog-service
+      - order-service
+    networks:
+      - shopsphere-network
+
+  notification-service:
+    image: shopsphere/notification-service:latest
+    build: ./notification-service
+    container_name: notification-service
+    ports:
+      - "8086:8086"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+      SPRING_RABBITMQ_HOST: rabbitmq
+    depends_on:
+      - eureka-server
+      - rabbitmq
+    networks:
+      - shopsphere-network
+
+  api-gateway:
+    image: shopsphere/api-gateway:latest
+    build: ./api-gateway
+    container_name: api-gateway
+    ports:
+      - "8222:8222"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    depends_on:
+      - eureka-server
+      - auth-service
+      - catalog-service
+      - order-service
+      - admin-service
+    networks:
+      - shopsphere-network
+
+networks:
+  shopsphere-network:
+    driver: bridge
+
+volumes:
+  mysql_data:

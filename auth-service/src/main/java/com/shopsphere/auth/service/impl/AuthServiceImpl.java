@@ -4,6 +4,8 @@ import com.shopsphere.auth.dto.AuthResponse;
 import com.shopsphere.auth.dto.LoginRequest;
 import com.shopsphere.auth.dto.SignupRequest;
 import com.shopsphere.auth.entity.User;
+import com.shopsphere.auth.event.UserRegisteredEvent;
+import com.shopsphere.auth.publisher.AuthEventPublisher;
 import com.shopsphere.auth.repository.UserRepository;
 import com.shopsphere.auth.security.JwtUtil;
 import com.shopsphere.auth.service.AuthService;
@@ -18,6 +20,7 @@ public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final AuthEventPublisher eventPublisher;
 
     @Override
     public AuthResponse signup(SignupRequest request) {
@@ -31,6 +34,10 @@ public class AuthServiceImpl implements AuthService {
         user.setRole(User.Role.CUSTOMER);
         userRepository.save(user);
         String token = jwtUtil.generateToken(user.getEmail(), user.getRole().name());
+
+        // Publish USER_REGISTERED event
+        eventPublisher.publishUserRegistered(new UserRegisteredEvent(user.getEmail(), user.getName(), user.getRole().name()));
+
         return new AuthResponse(token, user.getEmail(), user.getName(), user.getRole().name());
     }
 

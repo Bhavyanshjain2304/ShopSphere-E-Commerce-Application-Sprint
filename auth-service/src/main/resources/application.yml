@@ -4,8 +4,11 @@ server:
 spring:
   application:
     name: auth-service
+  cloud:
+    config:
+      enabled: false
   datasource:
-    url: jdbc:mysql://localhost:3306/shopsphere_auth?createDatabaseIfNotExist=true
+    url: jdbc:mysql://mysql:3306/shopsphere_auth?createDatabaseIfNotExist=true
     username: root
     password: 12aAA12@
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -16,12 +19,31 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
+  rabbitmq:
+    host: ${SPRING_RABBITMQ_HOST:localhost}
+    port: 5672
+    username: guest
+    password: guest
 
 jwt:
   secret: ${JWT_SECRET:ShopSphereSecretKey2024ShopSphereSecretKey2024ShopSphereSecretKey2024}
-  expiration: ${JWT_EXPIRATION:86400000}
+  expiration: 86400000
 
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka/
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka/}
+
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: http://zipkin:9411/api/v2/spans
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
