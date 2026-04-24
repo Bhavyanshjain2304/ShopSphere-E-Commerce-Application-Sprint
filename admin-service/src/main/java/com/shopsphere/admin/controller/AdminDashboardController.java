@@ -24,6 +24,9 @@ public class AdminDashboardController {
 
     @GetMapping("/reports")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getReports() {
-        return ResponseEntity.ok(ApiResponse.success("Reports data", orderClient.getDashboard()));
+        Map<String, Object> reports = new java.util.HashMap<>();
+        reports.put("orders", orderClient.getAllOrders());
+        reports.put("dashboard", orderClient.getDashboard());
+        return ResponseEntity.ok(ApiResponse.success("Reports data", reports));
     }
 }

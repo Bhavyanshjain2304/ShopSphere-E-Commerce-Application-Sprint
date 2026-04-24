@@ -34,10 +34,7 @@ public class AuthServiceImpl implements AuthService {
         user.setRole(User.Role.CUSTOMER);
         userRepository.save(user);
         String token = jwtUtil.generateToken(user.getEmail(), user.getRole().name());
-
-        // Publish USER_REGISTERED event
         eventPublisher.publishUserRegistered(new UserRegisteredEvent(user.getEmail(), user.getName(), user.getRole().name()));
-
         return new AuthResponse(token, user.getEmail(), user.getName(), user.getRole().name());
     }
 
@@ -55,5 +52,13 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public boolean validateToken(String token) {
         return jwtUtil.isValid(token);
+    }
+
+    @Override
+    public AuthResponse getUserByEmail(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        String token = jwtUtil.generateToken(user.getEmail(), user.getRole().name());
+        return new AuthResponse(token, user.getEmail(), user.getName(), user.getRole().name());
     }
 }

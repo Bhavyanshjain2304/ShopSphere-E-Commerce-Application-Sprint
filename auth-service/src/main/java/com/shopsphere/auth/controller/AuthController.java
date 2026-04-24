@@ -32,4 +32,9 @@ public class AuthController {
     public ResponseEntity<Map<String, Boolean>> validate(@RequestParam String token) {
         return ResponseEntity.ok(Map.of("valid", authService.validateToken(token)));
     }
+
+    @GetMapping("/me")
+    public ResponseEntity<AuthResponse> getCurrentUser(@RequestHeader("X-User-Email") String email) {
+        return ResponseEntity.ok(authService.getUserByEmail(email));
+    }
 }
