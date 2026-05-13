@@ -42,8 +42,15 @@ public class Order {
 
     private LocalDateTime updatedAt;
 
+    /**
+     * Human-readable order code generated on creation.
+     * Format: ORD-XXXXXX (6 uppercase alphanumeric chars derived from timestamp + id)
+     */
+    @Column(unique = true)
+    private String orderCode;
+
     public enum OrderStatus {
-        DRAFT, CHECKOUT, PAID, PACKED, SHIPPED, DELIVERED, CANCELLED, FAILED
+        DRAFT, CHECKOUT, PAID, PACKED, PROCESSING, SHIPPED, DELIVERED, CANCELLED, FAILED
     }
 
     public enum PaymentMode {

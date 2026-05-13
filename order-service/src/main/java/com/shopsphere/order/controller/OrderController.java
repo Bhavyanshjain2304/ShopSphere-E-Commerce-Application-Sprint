@@ -1,5 +1,6 @@
 package com.shopsphere.order.controller;
 
+import com.shopsphere.order.dto.AdminDashboardResponse;
 import com.shopsphere.order.dto.ApiResponse;
 import com.shopsphere.order.dto.CheckoutStartRequest;
 import com.shopsphere.order.dto.PaymentRequest;
@@ -69,7 +70,7 @@ public class OrderController {
     }
 
     @GetMapping("/admin/dashboard")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getDashboard() {
+    public ResponseEntity<ApiResponse<AdminDashboardResponse>> getDashboard() {
         return ResponseEntity.ok(ApiResponse.success("Dashboard data", orderService.getDashboard()));
     }
 }

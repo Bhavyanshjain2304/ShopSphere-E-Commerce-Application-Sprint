@@ -1,5 +1,6 @@
 package com.shopsphere.order.service;
 
+import com.shopsphere.order.dto.AdminDashboardResponse;
 import com.shopsphere.order.dto.CheckoutStartRequest;
 import com.shopsphere.order.dto.PaymentRequest;
 import com.shopsphere.order.entity.Order;
@@ -15,5 +16,5 @@ public interface OrderService {
     List<Order> getOrderHistory(String userEmail);
     Order updateOrderStatus(Long id, Order.OrderStatus status);
     List<Order> getAllOrders();
-    Map<String, Object> getDashboard();
+    AdminDashboardResponse getDashboard();
 }

@@ -1,5 +1,6 @@
 package com.shopsphere.order.service.impl;
 
+import com.shopsphere.order.dto.AdminDashboardResponse;
 import com.shopsphere.order.dto.CheckoutStartRequest;
 import com.shopsphere.order.dto.PaymentRequest;
 import com.shopsphere.order.entity.CartItem;
@@ -19,7 +20,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -62,7 +66,12 @@ public class OrderServiceImpl implements OrderService {
         order.setStatus(Order.OrderStatus.CHECKOUT);
 
         Order saved = orderRepository.save(order);
-        log.info("Checkout started for user {}, orderId: {}", userEmail, saved.getId());
+
+        // Generate readable order code: ORD- + padded id
+        saved.setOrderCode("ORD-" + String.format("%06d", saved.getId()));
+        saved = orderRepository.save(saved);
+
+        log.info("Checkout started for user {}, orderCode: {}", userEmail, saved.getOrderCode());
         return saved;
     }
 
@@ -169,11 +178,35 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public Map<String, Object> getDashboard() {
-        Map<String, Object> dashboard = new HashMap<>();
-        dashboard.put("totalOrders", orderRepository.countTotalOrders());
-        dashboard.put("totalRevenue", orderRepository.calculateTotalRevenue());
-        return dashboard;
+    public AdminDashboardResponse getDashboard() {
+        LocalDateTime startOfDay = LocalDate.now().atStartOfDay();
+        LocalDateTime endOfDay = startOfDay.plusDays(1);
+        LocalDateTime sixMonthsAgo = LocalDateTime.now().minusMonths(6);
+
+        // Monthly revenue aggregation
+        List<Object[]> rawMonthly = orderRepository.getMonthlyRevenue(sixMonthsAgo);
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("MMM yyyy");
+        List<AdminDashboardResponse.MonthlyRevenue> monthlyRevenue = new ArrayList<>();
+        for (Object[] row : rawMonthly) {
+            int year = ((Number) row[0]).intValue();
+            int month = ((Number) row[1]).intValue();
+            BigDecimal revenue = (BigDecimal) row[2];
+            String label = LocalDate.of(year, month, 1).format(fmt);
+            monthlyRevenue.add(AdminDashboardResponse.MonthlyRevenue.builder()
+                    .month(label)
+                    .revenue(revenue)
+                    .build());
+        }
+
+        return AdminDashboardResponse.builder()
+                .totalOrders(orderRepository.countTotalOrders())
+                .totalRevenue(orderRepository.calculateTotalRevenue())
+                .deliveredOrders(orderRepository.countDeliveredOrders())
+                .pendingOrders(orderRepository.countPendingOrders())
+                .cancelledOrders(orderRepository.countCancelledOrders())
+                .todayOrders(orderRepository.countTodayOrders(startOfDay, endOfDay))
+                .monthlyRevenue(monthlyRevenue)
+                .build();
     }
 
     @Override

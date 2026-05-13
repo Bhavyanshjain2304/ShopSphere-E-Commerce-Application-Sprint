@@ -13,11 +13,12 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// Handle 401 globally - redirect to login
+// Handle 401 globally - redirect to login (skip auth/me which handles its own errors)
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const url = error.config?.url || '';
+    if (error.response?.status === 401 && !url.includes('/auth/me') && !url.includes('/auth/login')) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       window.location.href = '/login';

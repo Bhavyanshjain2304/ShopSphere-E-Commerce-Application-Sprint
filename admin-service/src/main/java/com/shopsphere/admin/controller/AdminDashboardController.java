@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -19,14 +20,26 @@ public class AdminDashboardController {
 
     @GetMapping("/dashboard")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getDashboard() {
-        return ResponseEntity.ok(ApiResponse.success("Dashboard data", orderClient.getDashboard()));
+        // order-service returns { success, message, data: { totalOrders, ... } }
+        // extract the inner data to avoid double-wrapping
+        Map<String, Object> orderResponse = orderClient.getDashboard();
+        @SuppressWarnings("unchecked")
+        Map<String, Object> dashboardData = (Map<String, Object>) orderResponse.getOrDefault("data", orderResponse);
+        return ResponseEntity.ok(ApiResponse.success("Dashboard fetched successfully", dashboardData));
     }
 
     @GetMapping("/reports")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getReports() {
-        Map<String, Object> reports = new java.util.HashMap<>();
-        reports.put("orders", orderClient.getAllOrders());
-        reports.put("dashboard", orderClient.getDashboard());
+        Map<String, Object> orderResponse = orderClient.getDashboard();
+        @SuppressWarnings("unchecked")
+        Map<String, Object> dashboardData = (Map<String, Object>) orderResponse.getOrDefault("data", orderResponse);
+
+        Map<String, Object> allOrdersResponse = orderClient.getAllOrders();
+        Object orders = allOrdersResponse.getOrDefault("data", allOrdersResponse);
+
+        Map<String, Object> reports = new HashMap<>();
+        reports.put("dashboard", dashboardData);
+        reports.put("orders", orders);
         return ResponseEntity.ok(ApiResponse.success("Reports data", reports));
     }
 }

@@ -6,6 +6,7 @@ import com.shopsphere.auth.dto.SignupRequest;
 
 public interface AuthService {
     AuthResponse signup(SignupRequest request);
+    AuthResponse signupAdmin(SignupRequest request);
     AuthResponse login(LoginRequest request);
     boolean validateToken(String token);
     AuthResponse getUserByEmail(String email);

@@ -39,6 +39,22 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    public AuthResponse signupAdmin(SignupRequest request) {
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new RuntimeException("Email already registered");
+        }
+        User user = new User();
+        user.setName(request.getName());
+        user.setEmail(request.getEmail());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setRole(User.Role.ADMIN);
+        userRepository.save(user);
+        String token = jwtUtil.generateToken(user.getEmail(), user.getRole().name());
+        eventPublisher.publishUserRegistered(new UserRegisteredEvent(user.getEmail(), user.getName(), user.getRole().name()));
+        return new AuthResponse(token, user.getEmail(), user.getName(), user.getRole().name());
+    }
+
+    @Override
     public AuthResponse login(LoginRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new RuntimeException("Invalid credentials"));

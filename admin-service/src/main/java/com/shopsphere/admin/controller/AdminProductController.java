@@ -18,27 +18,35 @@ public class AdminProductController {
     private final CatalogClient catalogClient;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getAllProducts(
+    public ResponseEntity<ApiResponse<Object>> getAllProducts(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        return ResponseEntity.ok(ApiResponse.success("Products fetched", catalogClient.getAllProducts(page, size)));
+        Map<String, Object> response = catalogClient.getAllProducts(page, size);
+        Object data = response.getOrDefault("data", response);
+        return ResponseEntity.ok(ApiResponse.success("Products fetched", data));
     }
 
     @PostMapping
-    public ResponseEntity<ApiResponse<Map<String, Object>>> createProduct(
+    public ResponseEntity<ApiResponse<Object>> createProduct(
             @Valid @RequestBody ProductRequest request) {
-        return ResponseEntity.ok(ApiResponse.success("Product created", catalogClient.createProduct(request)));
+        Map<String, Object> response = catalogClient.createProduct(request);
+        Object data = response.getOrDefault("data", response);
+        return ResponseEntity.ok(ApiResponse.success("Product created", data));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> updateProduct(
+    public ResponseEntity<ApiResponse<Object>> updateProduct(
             @PathVariable Long id,
             @Valid @RequestBody ProductRequest request) {
-        return ResponseEntity.ok(ApiResponse.success("Product updated", catalogClient.updateProduct(id, request)));
+        Map<String, Object> response = catalogClient.updateProduct(id, request);
+        Object data = response.getOrDefault("data", response);
+        return ResponseEntity.ok(ApiResponse.success("Product updated", data));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> deleteProduct(@PathVariable Long id) {
-        return ResponseEntity.ok(ApiResponse.success("Product deleted", catalogClient.deleteProduct(id)));
+    public ResponseEntity<ApiResponse<Object>> deleteProduct(@PathVariable Long id) {
+        Map<String, Object> response = catalogClient.deleteProduct(id);
+        Object data = response.getOrDefault("data", response);
+        return ResponseEntity.ok(ApiResponse.success("Product deleted", data));
     }
 }

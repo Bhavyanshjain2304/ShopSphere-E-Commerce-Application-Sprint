@@ -11,7 +11,12 @@ export const AuthProvider = ({ children }) => {
     const token = localStorage.getItem('token');
     if (token) {
       getMe()
-        .then((res) => setUser(res.data))
+        .then((res) => {
+          // getMe returns AuthResponse: { token, email, name, role }
+          // strip token from user state to keep it consistent with login()
+          const { token: _t, ...userData } = res.data;
+          setUser(userData);
+        })
         .catch(() => {
           localStorage.removeItem('token');
           localStorage.removeItem('user');

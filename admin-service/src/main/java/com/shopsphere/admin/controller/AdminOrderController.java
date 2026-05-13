@@ -18,14 +18,19 @@ public class AdminOrderController {
     private final OrderClient orderClient;
 
     @GetMapping
-    public ResponseEntity<ApiResponse<Map<String, Object>>> getAllOrders() {
-        return ResponseEntity.ok(ApiResponse.success("Orders fetched", orderClient.getAllOrders()));
+    public ResponseEntity<ApiResponse<Object>> getAllOrders() {
+        Map<String, Object> response = orderClient.getAllOrders();
+        // Unwrap inner data from order-service ApiResponse wrapper
+        Object data = response.getOrDefault("data", response);
+        return ResponseEntity.ok(ApiResponse.success("Orders fetched", data));
     }
 
     @PutMapping("/{id}/status")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> updateOrderStatus(
+    public ResponseEntity<ApiResponse<Object>> updateOrderStatus(
             @PathVariable Long id,
             @Valid @RequestBody OrderStatusRequest request) {
-        return ResponseEntity.ok(ApiResponse.success("Status updated", orderClient.updateOrderStatus(id, request.getStatus())));
+        Map<String, Object> response = orderClient.updateOrderStatus(id, request.getStatus());
+        Object data = response.getOrDefault("data", response);
+        return ResponseEntity.ok(ApiResponse.success("Status updated", data));
     }
 }
